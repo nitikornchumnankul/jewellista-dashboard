@@ -207,27 +207,26 @@ export default function Dashboard1() {
 
     return (
         <div className="mb-6">
-            <div className="mb-6">
-                <nav className="bg-white shadow-md">
-                    <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
-                        <div className="relative flex items-center justify-between h-16">
-                            {/* <!-- Logo on the far left --> */}
+            <div className="mb-6 w-full">
+                <nav className="bg-white shadow-md w-screen">
+                    <div className="px-4 sm:px-6 lg:px-8 w-full">
+                        <div className="relative flex items-center h-16 w-full">
+                            {/* Logo on the far left */}
                             <div className="flex-shrink-0">
-                                <img className="block lg:hidden h-20 w-auto" src="/jewellista.png" alt="Your Logo" />
-                                <img className="hidden lg:block h-20 w-auto" src="/jewellista.png" alt="Your Logo" />
+                                <img className="h-20 w-auto" src="/jewellista.png" alt="Your Logo" />
                             </div>
-                            {/* <!-- Navigation links and buttons aligned to the far right -->  */}
-                            <div className="flex-1 flex justify-end items-center">
+                            {/* Navigation links and buttons aligned to the far right */}
+                            <div className="flex-grow flex justify-end items-center">
                                 <div className="flex space-x-4">
                                     <a href="#" className="text-gray-800 hover:bg-gray-100 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium">Home</a>
                                     <a href="#" className="text-gray-800 hover:bg-gray-100 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium">Overview</a>
                                     <a href="#" className="text-gray-800 hover:bg-gray-100 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium">Reports</a>
                                     <a href="#" className="text-gray-800 hover:bg-gray-100 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium">Settings</a>
                                 </div>
-                                {/* <!-- Optional right-side button --> */}
+                                {/* Optional right-side button */}
                                 <button className="bg-white p-1 rounded-full text-gray-800 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800">
                                     <span className="sr-only">View notifications</span>
-                                    {/* <!-- Icon --> */}
+                                    {/* Icon */}
                                 </button>
                             </div>
                         </div>
@@ -237,45 +236,49 @@ export default function Dashboard1() {
 
 
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-white p-6 rounded-lg shadow-lg">
-                    <h6 className="text-xl mb-4 font-semibold">Production Overview</h6>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        <div className="bg-green-100 p-4 rounded-lg shadow-lg">
-                            <h5 className="text-3xl">{totalOrders}</h5>
+
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 w-full">
+                {/* Production Overview */}
+                <div className="bg-white p-6 rounded-lg shadow-lg col-span-1 lg:col-span-3 w-full">
+                    <h6 className="text-2xl font-semibold mb-4">Production Overview</h6>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+                        <div className="bg-green-100 p-4 rounded-lg shadow-md w-full">
+                            <h5 className="text-2xl md:text-3xl">{totalOrders}</h5>
                             <p className="text-lg">Total Orders</p>
                         </div>
-                        <div className="bg-blue-100 p-4 rounded-lg shadow-lg">
-                            <h5 className="text-3xl">{completedOrders}</h5>
+                        <div className="bg-blue-100 p-4 rounded-lg shadow-md w-full">
+                            <h5 className="text-2xl md:text-3xl">{completedOrders}</h5>
                             <p className="text-lg">Completed Orders</p>
                         </div>
-                        <div className="bg-yellow-100 p-4 rounded-lg shadow-lg">
-                            <h5 className="text-3xl">{pendingOrders}</h5>
+                        <div className="bg-yellow-100 p-4 rounded-lg shadow-md w-full">
+                            <h5 className="text-2xl md:text-3xl">{pendingOrders}</h5>
                             <p className="text-lg">Pending Orders</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-lg shadow-lg">
-                    <h6 className="text-xl mb-4 font-semibold">Shipment Overview</h6>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        <div className="bg-indigo-100 p-4 rounded-lg shadow-lg">
-                            <h5 className="text-3xl">{completedOrders}</h5>
+                {/* Shipment Overview */}
+                <div className="bg-white p-6 rounded-lg shadow-lg col-span-1 lg:col-span-3 w-full">
+                    <h6 className="text-2xl font-semibold mb-4">Shipment Overview</h6>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
+                        <div className="bg-indigo-100 p-4 rounded-lg shadow-md w-full">
+                            <h5 className="text-2xl md:text-3xl">{completedOrders}</h5>
                             <p className="text-lg">Total Shipped</p>
                         </div>
-                        <div className="bg-orange-100 p-4 rounded-lg shadow-lg">
-                            <h5 className="text-3xl">{pendingOrders}</h5>
+                        <div className="bg-orange-100 p-4 rounded-lg shadow-md w-full">
+                            <h5 className="text-2xl md:text-3xl">{pendingOrders}</h5>
                             <p className="text-lg">Total Pending Shipments</p>
                         </div>
-                        <div className="bg-red-100 p-4 rounded-lg shadow-lg">
-                            <h5 className="text-3xl">0</h5>
+                        <div className="bg-red-100 p-4 rounded-lg shadow-md w-full">
+                            <h5 className="text-2xl md:text-3xl">0</h5>
                             <p className="text-lg">Total Failed Shipments</p>
                         </div>
                     </div>
                 </div>
-
-
             </div>
+
+
 
             <div className="bg-white p-6 rounded-lg shadow-lg">
                 <h6 className="text-xl mb-4 font-semibold">Weekly Production Analysis</h6>

@@ -38,7 +38,7 @@ export default function Home() {
         <button style={{ padding: "10px", fontSize: "16px" }}>Go to Dashboard</button>
       </Link>
 
-      <Link href="/pages/dashboard1">
+      <Link href="/pages/dashboard3">
         <button style={{ padding: "10px", fontSize: "16px" }}>Go to Dashboard1</button>
       </Link>
 
