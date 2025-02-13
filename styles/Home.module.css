@@ -52,7 +52,7 @@
   font-family: inherit;
   background: var(--gray-alpha-100);
   padding: 2px 4px;
-  border-radius: 4px;
+  b order-radius: 4px;
   font-weight: 600;
 }
 
@@ -63,15 +63,15 @@
 
 .ctas a {
   appearance: none;
-  border-radius: 128px;
+  b order-radius: 128px;
   height: 48px;
   padding: 0 20px;
-  border: none;
-  border: 1px solid transparent;
+  b order: none;
+  b order: 1px solid transparent;
   transition:
     background 0.2s,
     color 0.2s,
-    border-color 0.2s;
+    b order-color 0.2s;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -88,7 +88,7 @@ a.primary {
 }
 
 a.secondary {
-  border-color: var(--gray-alpha-200);
+  b order-color: var(--gray-alpha-200);
   min-width: 180px;
 }
 
@@ -112,12 +112,12 @@ a.secondary {
 @media (hover: hover) and (pointer: fine) {
   a.primary:hover {
     background: var(--button-primary-hover);
-    border-color: transparent;
+    b order-color: transparent;
   }
 
   a.secondary:hover {
     background: var(--button-secondary-hover);
-    border-color: transparent;
+    b order-color: transparent;
   }
 
   .footer a:hover {
