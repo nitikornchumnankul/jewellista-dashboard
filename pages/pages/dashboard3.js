@@ -45,6 +45,8 @@ export default function Dashboard1() {
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilters, setActiveFilters] = useState({});
 
+    // เพิ่ม state สำหรับเก็บข้อมูลที่เลือก
+    const [selectedRowData, setSelectedRowData] = useState(null);
 
     useEffect(() => {
         fetchData();
@@ -155,40 +157,106 @@ export default function Dashboard1() {
         });
     };
 
-
-
     // Reset page when filters change
     useEffect(() => setCurrentPage(1), [activeFilters, searchTerm]);
 
-    const weeklyProductionData = [
-        { week: 1, totalProduction: 100, completedItems: 80 },
-        { week: 2, totalProduction: 100, completedItems: 50 },
-        { week: 3, totalProduction: 100, completedItems: 50 },
-        { week: 4, totalProduction: 100, completedItems: 50 },
-    ];
+    // ลบ weeklyProductionData mock data ออก และสร้างฟังก์ชันใหม่สำหรับคำนวณข้อมูลรายสัปดาห์
+    const calculateWeeklyData = (data) => {
+        // จัดกลุ่มข้อมูลตามสัปดาห์
+        const weeklyData = {
+            1: { totalProduction: 0, completedItems: 0 },
+            2: { totalProduction: 0, completedItems: 0 },
+            3: { totalProduction: 0, completedItems: 0 },
+            4: { totalProduction: 0, completedItems: 0 },
+            5: { totalProduction: 0, completedItems: 0 }
+        };
 
+        data.forEach(order => {
+            const week = 1; // ใช้ค่าเริ่มต้นเป็น 1
+            
+            // เพิ่มจำนวนการผลิตทั้งหมด
+            weeklyData[week].totalProduction += Math.abs(order.order_quantity || 0);
+            
+            // เพิ่มจำนวนที่เสร็จสมบูรณ์
+            if (order.cast_completed && Math.abs(order.cast_completed) >= Math.abs(order.order_quantity)) {
+                weeklyData[week].completedItems += Math.abs(order.order_quantity);
+            }
+        });
+
+        // แปลงเป็น array format
+        return Object.entries(weeklyData).map(([week, data]) => ({
+            week: parseInt(week),
+            totalProduction: data.totalProduction,
+            completedItems: data.completedItems
+        }));
+    };
+
+    // อัพเดท lineGraphData ให้ใช้ข้อมูลจริง
     const lineGraphData = {
-        labels: weeklyProductionData.map((item) => `Week ${item.week}`),
+        labels: calculateWeeklyData(filteredData).map(item => `Week ${item.week}`),
         datasets: [
             {
                 label: "Total Production",
-                data: weeklyProductionData.map((item) => item.totalProduction),
+                data: calculateWeeklyData(filteredData).map(item => item.totalProduction),
                 borderColor: "rgba(75, 192, 192, 1)",
                 fill: false,
             },
             {
                 label: "Completed Items",
-                data: weeklyProductionData.map((item) => item.completedItems),
+                data: calculateWeeklyData(filteredData).map(item => item.completedItems),
                 borderColor: "rgba(153, 102, 255, 1)",
                 fill: false,
             },
         ],
     };
 
+    // เพิ่มฟังก์ชันสำหรับข้อมูลกราฟของแถวที่เลือก
+    const getSelectedRowGraphData = () => {
+        if (!selectedRowData) return lineGraphData;
+        
+        return {
+            labels: ['Cast Completed', 'Cast Shortage', 'Export to IE', 'Pending Export'],
+            datasets: [{
+                label: `Order ${selectedRowData.sales_order} Statistics`,
+                data: [
+                    Math.abs(selectedRowData.cast_completed || 0),
+                    Math.abs(selectedRowData.cast_shortage || 0),
+                    Math.abs(selectedRowData.export_to_ie || 0),
+                    Math.abs(selectedRowData.pending_export || 0)
+                ],
+                borderColor: "rgba(75, 192, 192, 1)",
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.6)',
+                    'rgba(255, 99, 132, 0.6)',
+                    'rgba(54, 162, 235, 0.6)',
+                    'rgba(255, 206, 86, 0.6)'
+                ],
+                fill: true,
+            }]
+        };
+    };
 
+    // เพิ่มฟังก์ชันจัดการการคลิกที่แถว
+    const handleRowClick = (row) => {
+        setSelectedRowData(row === selectedRowData ? null : row);
+    };
 
+    const [showFilter, setShowFilter] = useState(false);
+    const [uniqueDistributionCenters, setUniqueDistributionCenters] = useState([]);
 
-
+    useEffect(() => {
+        if (data.length > 0) {
+            const unique = [...new Set(data.map(item => item.distribution_center))];
+            setUniqueDistributionCenters(unique);
+        }
+    }, [data]);
+    const handleFilterSelect = (value) => {
+        setActiveFilters(prev => ({
+            ...prev,
+            distribution_center: value
+        }));
+        setShowFilter(false);
+    };
     // Replace the old handleChangePage and handleChangeRowsPerPage with:
     const handlePageChange = (newPage) => {
         setCurrentPage(newPage);
@@ -207,32 +275,32 @@ export default function Dashboard1() {
 
     return (
         <div className="mb-6">
-            <div className="mb-6 w-full">
-                <nav className="bg-white shadow-md w-screen">
-                    <div className="px-4 sm:px-6 lg:px-8 w-full">
-                        <div className="relative flex items-center h-16 w-full">
-                            {/* Logo on the far left */}
-                            <div className="flex-shrink-0">
-                                <img className="h-20 w-auto" src="/jewellista.png" alt="Your Logo" />
+        <div className="mb-6 w-full">
+            <nav className="bg-white shadow-md w-screen">
+                <div className="px-4 sm:px-6 lg:px-8 w-full">
+                    <div className="relative flex items-center h-16 w-full">
+                        {/* Logo on the far left */}
+                        <div className="flex-shrink-0">
+                            <img className="h-20 w-auto" src="/jewellista.png" alt="Your Logo" />
+                        </div>
+                        {/* Navigation links and buttons aligned to the far right */}
+                        <div className="flex-grow flex justify-end items-center">
+                            <div className="flex space-x-4">
+                                <a href="#" className="text-gray-800 hover:bg-gray-100 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium">Home</a>
+                                <a href="#" className="text-gray-800 hover:bg-gray-100 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium">Overview</a>
+                                <a href="#" className="text-gray-800 hover:bg-gray-100 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium">Reports</a>
+                                <a href="#" className="text-gray-800 hover:bg-gray-100 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium">Settings</a>
                             </div>
-                            {/* Navigation links and buttons aligned to the far right */}
-                            <div className="flex-grow flex justify-end items-center">
-                                <div className="flex space-x-4">
-                                    <a href="#" className="text-gray-800 hover:bg-gray-100 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium">Home</a>
-                                    <a href="#" className="text-gray-800 hover:bg-gray-100 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium">Overview</a>
-                                    <a href="#" className="text-gray-800 hover:bg-gray-100 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium">Reports</a>
-                                    <a href="#" className="text-gray-800 hover:bg-gray-100 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium">Settings</a>
-                                </div>
-                                {/* Optional right-side button */}
-                                <button className="bg-white p-1 rounded-full text-gray-800 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800">
-                                    <span className="sr-only">View notifications</span>
-                                    {/* Icon */}
-                                </button>
-                            </div>
+                            {/* Optional right-side button */}
+                            <button className="bg-white p-1 rounded-full text-gray-800 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800">
+                                <span className="sr-only">View notifications</span>
+                                {/* Icon */}
+                            </button>
                         </div>
                     </div>
-                </nav>
-            </div>
+                </div>
+            </nav>
+        </div>
 
 
 
@@ -281,9 +349,24 @@ export default function Dashboard1() {
 
 
             <div className="bg-white p-6 rounded-lg shadow-lg">
-                <h6 className="text-xl mb-4 font-semibold">Weekly Production Analysis</h6>
+                <h6 className="text-xl mb-4 font-semibold">
+                    {selectedRowData 
+                        ? `Order Analysis - ${selectedRowData.sales_order}`
+                        : 'Weekly Production Analysis'
+                    }
+                </h6>
                 <div className="h-64">
-                    <Line data={lineGraphData} />
+                    <Line 
+                        data={selectedRowData ? getSelectedRowGraphData() : lineGraphData}
+                        options={{
+                            responsive: true,
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }}
+                    />
                 </div>
             </div>
 
@@ -294,7 +377,54 @@ export default function Dashboard1() {
                     <table className="w-full border-collapse shadow-md rounded-lg overflow-hidden">
                         <thead>
                             <tr className="bg-gray-100 text-gray-700 uppercase text-sm leading-normal">
-                                <th className="border-b p-3 text-left">Distribution Center</th>
+                                <th className="border-b p-3 text-left relative">
+                                    <div className="flex items-center space-x-2">
+                                        <span>Distribution Center</span>
+                                        <button 
+                                            onClick={() => setShowFilter(!showFilter)}
+                                            className="hover:bg-gray-100 p-1 rounded"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                            </svg>
+                                        </button>
+                                        
+                                        {/* Dropdown Menu */}
+                                        {showFilter && (
+                                            <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg z-50 border">
+                                                <div className="p-2">
+                                                    {/* Clear Filter Option */}
+                                                    <div 
+                                                        className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer rounded"
+                                                        onClick={() => {
+                                                            const newFilters = { ...activeFilters };
+                                                            delete newFilters.distribution_center;
+                                                            setActiveFilters(newFilters);
+                                                            setShowFilter(false);
+                                                        }}
+                                                    >
+                                                        Clear Filter
+                                                    </div>
+                                                    
+                                                    {/* Filter Options */}
+                                                    {uniqueDistributionCenters.map((center) => (
+                                                        <div
+                                                            key={center}
+                                                            className={`px-4 py-2 text-sm cursor-pointer rounded ${
+                                                                activeFilters.distribution_center === center 
+                                                                ? 'bg-blue-100 text-blue-800' 
+                                                                : 'text-gray-700 hover:bg-gray-100'
+                                                            }`}
+                                                            onClick={() => handleFilterSelect(center)}
+                                                        >
+                                                            {center}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </th>
                                 <th className="border-b p-3 text-left">Sales Order</th>
                                 <th className="border-b p-3 text-left">Casting Status</th>
                                 <th className="border-b p-3 text-left">Cast Completed</th>
@@ -306,7 +436,13 @@ export default function Dashboard1() {
                         </thead>
                         <tbody>
                             {paginatedData.map((row, index) => (
-                                <tr key={index} className="hover:bg-gray-50 transition">
+                                <tr 
+                                    key={index} 
+                                    className={`hover:bg-gray-50 transition cursor-pointer ${
+                                        selectedRowData === row ? 'bg-blue-50' : ''
+                                    }`}
+                                    onClick={() => handleRowClick(row)}
+                                >
                                     <td className="border-b p-3 text-gray-700">{row.distribution_center}</td>
                                     <td className="border-b p-3 text-gray-700">{row.sales_order}</td>
                                     <td className="border-b p-3 font-medium">
