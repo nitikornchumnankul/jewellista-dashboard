@@ -96,9 +96,7 @@ export default function ChatPage() {
     };
 
     return (
-
         <div className="flex h-screen bg-gray-50">
-
             {/* Sidebar */}
             <div className={`${isSidebarOpen ? 'w-80' : 'w-0'} bg-gray-900 transition-all duration-300 overflow-hidden flex flex-col`}>
                 <div className="p-4 border-b border-gray-700">
@@ -132,34 +130,6 @@ export default function ChatPage() {
 
             {/* Main Chat Area */}
             <div className="flex-1 flex flex-col">
-                <div className="mb-6">
-                    <nav className="bg-white shadow-md">
-                        <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
-                            <div className="relative flex items-center justify-between h-16">
-                                {/* <!-- Logo on the far left --> */}
-                                <div className="flex-shrink-0">
-                                    <img className="block lg:hidden h-20 w-auto" src="/jewellista.png" alt="Your Logo" />
-                                    <img className="hidden lg:block h-20 w-auto" src="/jewellista.png" alt="Your Logo" />
-                                </div>
-                                {/* <!-- Navigation links and buttons aligned to the far right -->  */}
-                                <div className="flex-1 flex justify-end items-center">
-                                    <div className="flex space-x-4">
-                                        <a href="#" className="text-gray-800 hover:bg-gray-100 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium">Home</a>
-                                        <a href="#" className="text-gray-800 hover:bg-gray-100 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium">Overview</a>
-                                        <a href="#" className="text-gray-800 hover:bg-gray-100 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium">Reports</a>
-                                        <a href="#" className="text-gray-800 hover:bg-gray-100 hover:text-gray-800 px-3 py-2 rounded-md text-sm font-medium">Settings</a>
-                                    </div>
-                                    {/* <!-- Optional right-side button --> */}
-                                    <button className="bg-white p-1 rounded-full text-gray-800 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-800">
-                                        <span className="sr-only">View notifications</span>
-                                        {/* <!-- Icon --> */}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </nav>
-                </div>
-
                 {/* Header */}
                 <div className="bg-white border-b p-4 flex items-center justify-between">
                     <button

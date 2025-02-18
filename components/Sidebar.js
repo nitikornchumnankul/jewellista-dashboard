@@ -1,8 +1,9 @@
 import React from 'react';
+import Chat from './Chat';
 
 export default function Sidebar() {
     return (
-        <div className="w-64 bg-white shadow-sm border-r border-gray-200">
+        <div className="relative w-64 bg-white shadow-sm border-r border-gray-200">
             <div className="flex flex-col h-full">
                 {/* Logo Section */}
                 <div className="flex items-center justify-center h-17 border-b border-gray-200">
@@ -50,6 +51,9 @@ export default function Sidebar() {
                     </div>
                 </nav>
             </div>
+            
+            {/* Add Chat Component */}
+            <Chat />
         </div>
     );
 } 
