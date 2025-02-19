@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { Line } from "react-chartjs-2";
+import { Line, Bar, Pie } from "react-chartjs-2";
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -8,12 +8,22 @@ import {
     BarElement,
     LineElement,
     PointElement,
+    ArcElement,
     Tooltip as ChartTooltip,
     Legend,
 } from "chart.js";
 import { SendHorizontal, Bot, User, Loader2, History, X, MessageSquare } from 'lucide-react';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ChartTooltip, Legend);
+ChartJS.register(
+    CategoryScale, 
+    LinearScale, 
+    BarElement, 
+    LineElement, 
+    PointElement, 
+    ArcElement,
+    ChartTooltip, 
+    Legend
+);
 
 export default function Dashboard1() {
     const [data, setData] = useState([]);
@@ -71,6 +81,18 @@ export default function Dashboard1() {
     const [isChatSidebarOpen, setIsChatSidebarOpen] = useState(true);
     const messagesEndRef = useRef(null);
 
+    // Add new state for unique values
+    const [uniqueValues, setUniqueValues] = useState({
+        sales_order: [],
+        cast_completed: [],
+        cast_shortage: [],
+        pending_export: [],
+        export_to_ie: [],
+    });
+
+    // Add state for active column filter
+    const [activeFilterColumn, setActiveFilterColumn] = useState(null);
+
     useEffect(() => {
         fetchData();
     }, []);
@@ -112,7 +134,7 @@ export default function Dashboard1() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "filtered_data.csv";
+        a.download = "stock_data.csv";
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -372,6 +394,124 @@ export default function Dashboard1() {
         setShowChat(!showChat);
     };
 
+    // Add this to your useEffect where you're loading data
+    useEffect(() => {
+        if (data.length > 0) {
+            // Get unique values for each column
+            setUniqueValues({
+                sales_order: [...new Set(data.map(item => item.sales_order))],
+                cast_completed: [...new Set(data.map(item => Math.abs(item.cast_completed || 0)))],
+                cast_shortage: [...new Set(data.map(item => Math.abs(item.cast_shortage || 0)))],
+                pending_export: [...new Set(data.map(item => Math.abs(item.pending_export || 0)))],
+                export_to_ie: [...new Set(data.map(item => Math.abs(item.export_to_ie || 0)))],
+            });
+        }
+    }, [data]);
+
+    // Add filter toggle function
+    const toggleFilter = (column) => {
+        setActiveFilterColumn(activeFilterColumn === column ? null : column);
+    };
+
+    // Modify the getBarChartData function to accept a filter
+    const getBarChartData = (data, selectedRow = null) => {
+        // If a row is selected, only count that row's data
+        const dataToUse = selectedRow ? [selectedRow] : data;
+        
+        const statusCounts = {
+            completed: 0,
+            inProgress: 0,
+            pending: 0,
+            shipped: 0
+        };
+
+        dataToUse.forEach(item => {
+            // Count casting status
+            if (item.cast_completed && Math.abs(item.cast_completed) >= Math.abs(item.order_quantity)) {
+                statusCounts.completed++;
+            } else {
+                statusCounts.inProgress++;
+            }
+
+            // Count shipping status
+            if (!item.export_to_ie || item.pending_export) {
+                statusCounts.pending++;
+            } else {
+                statusCounts.shipped++;
+            }
+        });
+
+        return {
+            labels: ['Production Status', 'Shipping Status'],
+            datasets: [
+                {
+                    label: 'Completed/Shipped',
+                    data: [statusCounts.completed, statusCounts.shipped],
+                    backgroundColor: 'rgba(34, 197, 94, 0.6)',
+                },
+                {
+                    label: 'In Progress/Pending',
+                    data: [statusCounts.inProgress, statusCounts.pending],
+                    backgroundColor: 'rgba(234, 179, 8, 0.6)',
+                }
+            ]
+        };
+    };
+
+    // Modify the getPieChartData function to accept a filter
+    const getPieChartData = (data, selectedRow = null) => {
+        // If a row is selected, only show that distribution center
+        const dataToUse = selectedRow ? 
+            data.filter(item => item.distribution_center === selectedRow.distribution_center) : 
+            data;
+        
+        const distributionCenters = {};
+        const total = dataToUse.length;
+        
+        dataToUse.forEach(item => {
+            if (item.distribution_center) {
+                distributionCenters[item.distribution_center] = (distributionCenters[item.distribution_center] || 0) + 1;
+            }
+        });
+
+        const labels = Object.keys(distributionCenters).map(center => {
+            const count = distributionCenters[center];
+            const percentage = ((count / total) * 100).toFixed(1);
+            return `${center} (${percentage}%)`;
+        });
+
+        return {
+            labels: labels,
+            datasets: [{
+                data: Object.values(distributionCenters),
+                backgroundColor: [
+                    'rgba(34, 197, 94, 0.6)',
+                    'rgba(59, 130, 246, 0.6)',
+                    'rgba(234, 179, 8, 0.6)',
+                    'rgba(239, 68, 68, 0.6)',
+                    'rgba(168, 85, 247, 0.6)',
+                ],
+                borderColor: [
+                    'rgba(34, 197, 94, 1)',
+                    'rgba(59, 130, 246, 1)',
+                    'rgba(234, 179, 8, 1)',
+                    'rgba(239, 68, 68, 1)',
+                    'rgba(168, 85, 247, 1)',
+                ],
+                borderWidth: 1,
+            }]
+        };
+    };
+
+    // Add a general clear all filters function
+    const clearAllFilters = () => {
+        setActiveFilters({});
+        setShowFilter(false);
+        setActiveFilterColumn(null);
+        setSelectedRowData(null);
+        setSearchTerm('');
+    };
+
     return (
         <div className="flex h-screen bg-gray-50">
             {/* Sidebar */}
@@ -580,34 +720,126 @@ export default function Dashboard1() {
                     </section>
 
                     {/* Chart / Analysis Section */}
-                    <section className="mb-6 bg-white p-6 rounded-lg shadow">
-                        <h2 className="text-xl font-semibold mb-4">
-                            {selectedRowData
-                                ? `Order Analysis - ${selectedRowData.sales_order}`
-                                : 'Weekly Production Analysis'
-                            }
-                        </h2>
-                        <div className="h-64">
-                            <Line
-                                data={selectedRowData ? getSelectedRowGraphData() : lineGraphData}
-                                options={{
-                                    responsive: true,
-                                    scales: {
-                                        y: { beginAtZero: true }
-                                    }
-                                }}
-                            />
+                    <section className="mb-6 grid grid-cols-3 gap-6">
+                        {/* Pie Chart */}
+                        <div className="bg-white p-6 rounded-lg shadow">
+                            <h2 className="text-xl font-semibold mb-4">Distribution Center Breakdown</h2>
+                            <div className="h-64">
+                                <Pie
+                                    data={getPieChartData(filteredData, selectedRowData)}
+                                    options={{
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: {
+                                                position: 'bottom',
+                                                labels: {
+                                                    padding: 20,
+                                                    usePointStyle: true,
+                                                }
+                                            },
+                                            tooltip: {
+                                                callbacks: {
+                                                    label: function(context) {
+                                                        const value = context.raw;
+                                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                                        const percentage = ((value / total) * 100).toFixed(1);
+                                                        return `Count: ${value} (${percentage}%)`;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Line Chart - Weekly Production Analysis */}
+                        <div className="bg-white p-6 rounded-lg shadow">
+                            <h2 className="text-xl font-semibold mb-4">
+                                {selectedRowData
+                                    ? `Order Analysis - ${selectedRowData.sales_order}`
+                                    : 'Weekly Production Analysis'
+                                }
+                            </h2>
+                            <div className="h-64">
+                                <Line
+                                    data={selectedRowData ? getSelectedRowGraphData() : lineGraphData}
+                                    options={{
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        scales: {
+                                            y: { beginAtZero: true }
+                                        }
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Bar Chart */}
+                        <div className="bg-white p-6 rounded-lg shadow">
+                            <h2 className="text-xl font-semibold mb-4">Status Overview</h2>
+                            <div className="h-64">
+                                <Bar
+                                    data={getBarChartData(filteredData, selectedRowData)}
+                                    options={{
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                ticks: {
+                                                    stepSize: 1
+                                                }
+                                            }
+                                        }
+                                    }}
+                                />
+                            </div>
                         </div>
                     </section>
 
                     {/* Data Table */}
                     <section className="bg-white p-6 rounded-2xl shadow">
-                        <h2 className="text-2xl font-bold text-gray-700 mb-6">Status Overview</h2>
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-gray-700">Status Overview</h2>
+                            <div className="flex space-x-4">
+                                <button
+                                    onClick={clearAllFilters}
+                                    className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    <span>Clear All Filters</span>
+                                </button>
+                                <button
+                                    onClick={exportToCSV}
+                                    className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                >
+                                    <svg 
+                                        xmlns="http://www.w3.org/2000/svg" 
+                                        className="h-5 w-5" 
+                                        fill="none" 
+                                        viewBox="0 0 24 24" 
+                                        stroke="currentColor"
+                                    >
+                                        <path 
+                                            strokeLinecap="round" 
+                                            strokeLinejoin="round" 
+                                            strokeWidth={2} 
+                                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" 
+                                        />
+                                    </svg>
+                                    <span>Export CSV</span>
+                                </button>
+                            </div>
+                        </div>
                         <div className="overflow-x-auto">
                             <table className="min-w-full border-collapse">
                                 <thead>
                                     <tr className="bg-gray-100 text-gray-700 uppercase text-sm">
-                                        <th className="px-6 py-4 bg-gray-50 text-left text-xs font-inter font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">
+                                        <th className="px-6 py-4 bg-gray-50 text-left text-xs font-inter font-medium text-gray-500 uppercase tracking-wider">
                                             <div className="flex items-center space-x-2">
                                                 <span>Distribution Center</span>
                                                 <button
@@ -629,6 +861,7 @@ export default function Dashboard1() {
                                                                     delete newFilters.distribution_center;
                                                                     setActiveFilters(newFilters);
                                                                     setShowFilter(false);
+                                                                    setSelectedRowData(null);
                                                                 }}
                                                             >
                                                                 Clear Filter
@@ -650,7 +883,57 @@ export default function Dashboard1() {
                                                 )}
                                             </div>
                                         </th>
-                                        <th className="px-6 py-4 bg-gray-50 text-left text-xs font-inter font-medium text-gray-500 uppercase tracking-wider">Sales Order</th>
+                                        <th className="px-6 py-4 bg-gray-50 text-left text-xs font-inter font-medium text-gray-500 uppercase tracking-wider">
+                                            <div className="flex items-center space-x-2">
+                                                <span>Sales Order</span>
+                                                <button
+                                                    onClick={() => toggleFilter('sales_order')}
+                                                    className="hover:bg-gray-100 p-1 rounded focus:outline-none"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                                    </svg>
+                                                </button>
+                                                {activeFilterColumn === 'sales_order' && (
+                                                    <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg z-50 border">
+                                                        <div className="p-2">
+                                                            <div
+                                                                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer rounded"
+                                                                onClick={() => {
+                                                                    const newFilters = { ...activeFilters };
+                                                                    delete newFilters.sales_order;
+                                                                    setActiveFilters(newFilters);
+                                                                    setActiveFilterColumn(null);
+                                                                    setSelectedRowData(null);
+                                                                }}
+                                                            >
+                                                                Clear Filter
+                                                            </div>
+                                                            {uniqueValues.sales_order.map((value) => (
+                                                                <div
+                                                                    key={value}
+                                                                    className={`px-4 py-2 text-sm cursor-pointer rounded ${
+                                                                        activeFilters.sales_order === value
+                                                                            ? 'bg-blue-100 text-blue-800'
+                                                                            : 'text-gray-700 hover:bg-gray-100'
+                                                                    }`}
+                                                                    onClick={() => {
+                                                                        setActiveFilters(prev => ({
+                                                                            ...prev,
+                                                                            sales_order: value
+                                                                        }));
+                                                                        setActiveFilterColumn(null);
+                                                                        setSelectedRowData(null);
+                                                                    }}
+                                                                >
+                                                                    {value}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </th>
                                         <th className="px-6 py-4 bg-gray-50 text-left text-xs font-inter font-medium text-gray-500 uppercase tracking-wider">Cast Completed</th>
                                         <th className="px-6 py-4 bg-gray-50 text-left text-xs font-inter font-medium text-gray-500 uppercase tracking-wider">Casting Status</th>
                                         <th className="px-6 py-4 bg-gray-50 text-left text-xs font-inter font-medium text-gray-500 uppercase tracking-wider">Cast Shortage</th>
