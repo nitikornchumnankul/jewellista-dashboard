@@ -1,0 +1,40 @@
+name: pan
+source:
+  type: parquet
+  path: data.parquet
+description: Factory Production
+columns:
+- name: order_date
+  type: string
+- name: ' order_week'
+  type: string
+- name: ' distribution_center'
+  type: string
+- name: ' sales_order'
+  type: string
+- name: ' pool'
+  type: string
+- name: ' item_number'
+  type: string
+- name: ' mold'
+  type: float
+- name: ' order_quantity'
+  type: float
+- name: ' ship_month'
+  type: string
+- name: ' week_ship'
+  type: string
+- name: ' production_department'
+  type: string
+- name: ' cast_completed'
+  type: float
+- name: ' cast_shortage'
+  type: integer
+- name: ' casting_deadline'
+  type: float
+- name: ' export_to_ie'
+  type: float
+- name: ' pending_export'
+  type: integer
+- name: ' remarks'
+  type: float
