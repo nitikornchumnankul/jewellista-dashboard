@@ -1,6 +1,8 @@
-import Link from "next/link";
+'use client';
+
 import { useState } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
+import { User, Lock } from 'lucide-react';
 
 export default function Login() {
     const router = useRouter();
@@ -13,9 +15,7 @@ export default function Login() {
     const handleLogin = (e) => {
         e.preventDefault();
         
-        // ตรวจสอบ credentials
         if (credentials.username === 'admin' && credentials.password === 'admin123') {
-            // ถ้าถูกต้องให้ redirect ไปที่หน้า dashboard
             router.push('/pages/dashboard3');
         } else {
             setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
@@ -30,62 +30,69 @@ export default function Login() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg">
-                {/* Logo */}
-                <div className="flex justify-center">
-                    <img className="h-20 w-auto" src="/jewellista.png" alt="Jewellista Logo" />
-                </div>
-                
-                <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                    เข้าสู่ระบบ
-                </h2>
-                
-                {error && (
-                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                        <span className="block sm:inline">{error}</span>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-neutral-50 to-neutral-100 px-4">
+            <div className="max-w-md w-full space-y-8">
+                <div className="bg-white p-8 rounded-2xl shadow-sm border border-neutral-200">
+                    {/* Logo Container */}
+                    <div className="flex justify-center mb-8">
+                        <img 
+                            className="h-48 w-auto" 
+                            src="/jewellista.png" 
+                            alt="Jewellista Logo" 
+                        />
                     </div>
-                )}
-
-                <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-                    <div className="rounded-md shadow-sm -space-y-px">
-                        <div>
-                            <label htmlFor="username" className="sr-only">ชื่อผู้ใช้</label>
-                            <input
-                                id="username"
-                                name="username"
-                                type="text"
-                                required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                                placeholder="ชื่อผู้ใช้"
-                                value={credentials.username}
-                                onChange={handleChange}
-                            />
+                    
+                    
+                    {error && (
+                        <div className="mb-6 px-4 py-3 bg-red-50 border border-red-100 rounded-lg">
+                            <p className="text-sm text-red-600 text-center">{error}</p>
                         </div>
-                        <div>
-                            <label htmlFor="password" className="sr-only">รหัสผ่าน</label>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                                placeholder="รหัสผ่าน"
-                                value={credentials.password}
-                                onChange={handleChange}
-                            />
-                        </div>
-                    </div>
+                    )}
 
-                    <div>
+                    <form onSubmit={handleLogin} className="space-y-6">
+                        <div className="space-y-4">
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <User className="h-5 w-5 text-neutral-400" />
+                                </div>
+                                <input
+                                    id="username"
+                                    name="username"
+                                    type="text"
+                                    required
+                                    className="block w-full pl-11 pr-4 py-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-100 focus:border-neutral-300 transition-colors text-sm placeholder:text-neutral-400"
+                                    placeholder="ชื่อผู้ใช้"
+                                    value={credentials.username}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                            
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Lock className="h-5 w-5 text-neutral-400" />
+                                </div>
+                                <input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    required
+                                    className="block w-full pl-11 pr-4 py-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-100 focus:border-neutral-300 transition-colors text-sm placeholder:text-neutral-400"
+                                    placeholder="รหัสผ่าน"
+                                    value={credentials.password}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                        </div>
+
                         <button
                             type="submit"
-                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            className="w-full py-3 px-4 bg-neutral-900 hover:bg-neutral-800 text-white text-sm font-medium rounded-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-900"
                         >
                             เข้าสู่ระบบ
                         </button>
-                    </div>
-                </form>
+                    </form>
+                </div>
+                
             </div>
         </div>
     );
