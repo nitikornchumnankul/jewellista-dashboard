@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Lock } from 'lucide-react';
+import DOMPurify from 'dompurify';
 
 export default function Login() {
     const router = useRouter();
@@ -11,29 +12,80 @@ export default function Login() {
         password: ''
     });
     const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [csrfToken, setCsrfToken] = useState('');
 
-    const handleLogin = (e) => {
+    useEffect(() => {
+        // ขอ CSRF token เมื่อ component mount
+        const fetchCsrfToken = async () => {
+            try {
+                const response = await fetch('/api/auth/csrf');
+                const data = await response.json();
+                setCsrfToken(data.csrfToken);
+            } catch (err) {
+                console.error('Failed to fetch CSRF token:', err);
+            }
+        };
+        
+        fetchCsrfToken();
+    }, []);
+
+    const validateInput = (input) => {
+        const sanitized = DOMPurify.sanitize(input).trim();
+        return /^[a-zA-Z0-9_]{3,20}$/.test(sanitized);
+    };
+
+    const handleLogin = async (e) => {
         e.preventDefault();
         
-        if (credentials.username === 'admin' && credentials.password === 'admin123') {
-            router.push('/pages/dashboard3');
-        } else {
-            setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+        try {
+            setIsSubmitting(true);
+            setError('');
+
+            if (!validateInput(credentials.username)) {
+                throw new Error('ชื่อผู้ใช้ไม่ถูกต้อง กรุณาใช้ตัวอักษร ตัวเลข หรือ _ เท่านั้น (3-20 ตัวอักษร)');
+            }
+
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken,
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    username: DOMPurify.sanitize(credentials.username),
+                    password: credentials.password
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error);
+            }
+
+            router.push('/pages/dashboard');
+        } catch (err) {
+            setError(err.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleChange = (e) => {
-        setCredentials({
-            ...credentials,
-            [e.target.name]: e.target.value
-        });
+        const { name, value } = e.target;
+        setCredentials(prev => ({
+            ...prev,
+            [name]: value
+        }));
+        setError('');
     };
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-neutral-50 to-neutral-100 px-4">
             <div className="max-w-md w-full space-y-8">
                 <div className="bg-white p-8 rounded-2xl shadow-sm border border-neutral-200">
-                    {/* Logo Container */}
                     <div className="flex justify-center mb-8">
                         <img 
                             className="h-48 w-auto" 
@@ -49,7 +101,7 @@ export default function Login() {
                         </div>
                     )}
 
-                    <form onSubmit={handleLogin} className="space-y-6">
+                    <form onSubmit={handleLogin} className="space-y-6" autoComplete="off">
                         <div className="space-y-4">
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -86,9 +138,12 @@ export default function Login() {
 
                         <button
                             type="submit"
-                            className="w-full py-3 px-4 bg-neutral-900 hover:bg-neutral-800 text-white text-sm font-medium rounded-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-900"
+                            disabled={isSubmitting}
+                            className={`w-full py-3 px-4 bg-neutral-900 hover:bg-neutral-800 text-white text-sm font-medium rounded-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-900 ${
+                                isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
                         >
-                            เข้าสู่ระบบ
+                            {isSubmitting ? 'กำลังดำเนินการ...' : 'เข้าสู่ระบบ'}
                         </button>
                     </form>
                 </div>

@@ -1,6 +1,30 @@
+'use client';
+
 import React from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        try {
+            // เรียก API เพื่อลบ token cookie
+            const res = await fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include',
+                cache: 'no-store' // ป้องกันการ cache
+            });
+
+            if (res.ok) {
+                // ล้าง cache และ redirect
+                router.refresh(); // ล้าง cache ของ Next.js
+                router.push('/');
+            }
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
+    };
+
     return (
         <nav className="fixed top-0 right-0 left-64 z-10 bg-white shadow-sm border-b border-gray-200">
             <div className="px-4 sm:px-6 lg:px-8">
@@ -31,17 +55,28 @@ export default function Navbar() {
                             </svg>
                         </button>
 
-                        {/* User Profile */}
-                        <div className="flex items-center space-x-3">
-                            <img
-                                className="h-8 w-8 rounded-full"
-                                src="/jewellista.png"
-                                alt="User avatar"
-                            />
-                            <div className="hidden md:block">
-                                <p className="text-sm font-medium text-gray-700">Admin</p>
-                                <p className="text-xs text-gray-500">Admin</p>
-                            </div>
+                        {/* Logout Button - แทนที่ User Profile เดิม */}
+                        <div className="flex items-center">
+                            <button
+                                onClick={handleLogout}
+                                className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                            >
+                                <svg 
+                                    xmlns="http://www.w3.org/2000/svg" 
+                                    className="h-5 w-5" 
+                                    fill="none" 
+                                    viewBox="0 0 24 24" 
+                                    stroke="currentColor"
+                                >
+                                    <path 
+                                        strokeLinecap="round" 
+                                        strokeLinejoin="round" 
+                                        strokeWidth={2} 
+                                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" 
+                                    />
+                                </svg>
+                                <span>ออกจากระบบ</span>
+                            </button>
                         </div>
                     </div>
                 </div>
