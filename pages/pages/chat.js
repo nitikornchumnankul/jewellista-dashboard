@@ -1,30 +1,21 @@
 'use client';
 
+import Layout from '../../components/Layout';
 import { useState, useRef, useEffect } from 'react';
-import { SendHorizontal, Bot, User, Loader2, History, X, MessageSquare } from 'lucide-react';
+import { SendHorizontal, Bot, User } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ChatPage() {
-    const [sessions, setSessions] = useState([
+    const [messages, setMessages] = useState([
         {
             id: '1',
-            title: 'New Chat',
-            messages: [
-                {
-                    id: '1',
-                    content: "Hello! I'm your AI assistant. How can I help you today?",
-                    role: 'assistant'
-                }
-            ],
-            lastUpdated: new Date()
+            content: "สวัสดีครับ มีอะไรให้ช่วยไหมครับ?",
+            role: 'assistant'
         }
     ]);
-    const [currentSessionId, setCurrentSessionId] = useState('1');
     const [input, setInput] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isTyping, setIsTyping] = useState(false);
     const messagesEndRef = useRef(null);
-
-    const currentSession = sessions.find(s => s.id === currentSessionId);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -32,7 +23,7 @@ export default function ChatPage() {
 
     useEffect(() => {
         scrollToBottom();
-    }, [currentSession?.messages]);
+    }, [messages]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -44,155 +35,155 @@ export default function ChatPage() {
             role: 'user'
         };
 
-        setSessions(prev => prev.map(session =>
-            session.id === currentSessionId
-                ? {
-                    ...session,
-                    messages: [...session.messages, userMessage],
-                    lastUpdated: new Date()
-                }
-                : session
-        ));
-
+        setMessages(prev => [...prev, userMessage]);
         setInput('');
-        setIsLoading(true);
+        setIsTyping(true);
 
-        // Simulate AI response
+        // จำลองการตอบกลับ
         setTimeout(() => {
+            setIsTyping(false);
             const aiMessage = {
                 id: (Date.now() + 1).toString(),
-                content: "I'm a demo chat interface. While I can't actually process your messages, I can show you how the interface would work!",
+                content: "ขอบคุณสำหรับข้อความ ผมจะช่วยคุณเต็มที่ครับ",
                 role: 'assistant'
             };
-
-            setSessions(prev => prev.map(session =>
-                session.id === currentSessionId
-                    ? {
-                        ...session,
-                        messages: [...session.messages, aiMessage],
-                        lastUpdated: new Date()
-                    }
-                    : session
-            ));
-            setIsLoading(false);
-        }, 1000);
-    };
-
-    const startNewChat = () => {
-        const newSession = {
-            id: Date.now().toString(),
-            title: 'New Chat',
-            messages: [
-                {
-                    id: '1',
-                    content: "Hello! I'm your AI assistant. How can I help you today?",
-                    role: 'assistant'
-                }
-            ],
-            lastUpdated: new Date()
-        };
-        setSessions(prev => [...prev, newSession]);
-        setCurrentSessionId(newSession.id);
+            setMessages(prev => [...prev, aiMessage]);
+        }, 2000);
     };
 
     return (
-        <div className="flex h-screen bg-gray-50">
-            {/* Sidebar */}
-            <div className={`${isSidebarOpen ? 'w-80' : 'w-0'} bg-gray-900 transition-all duration-300 overflow-hidden flex flex-col`}>
-                <div className="p-4 border-b border-gray-700">
-                    <button
-                        onClick={startNewChat}
-                        className="w-full bg-gray-700 text-white rounded-lg p-3 flex items-center justify-center space-x-2 hover:bg-gray-600 transition-colors"
-                    >
-                        <MessageSquare size={20} />
-                        <span>New Chat</span>
-                    </button>
-                </div>
+        <Layout>
+            <div className="flex flex-col h-[calc(100vh-5rem)]">
+                {/* Messages Container */}
                 <div className="flex-1 overflow-y-auto">
-                    {sessions.sort((a, b) => b.lastUpdated.getTime() - a.lastUpdated.getTime()).map(session => (
-                        <button
-                            key={session.id}
-                            onClick={() => setCurrentSessionId(session.id)}
-                            className={`w-full p-4 text-left hover:bg-gray-800 transition-colors ${session.id === currentSessionId ? 'bg-gray-800' : ''
-                                } text-gray-300`}
+                    <div className="max-w-3xl mx-auto pt-4 pb-24">
+                        <AnimatePresence>
+                            {messages.map((message) => (
+                                <motion.div
+                                    key={message.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className={`px-4 py-6 ${
+                                        message.role === 'assistant' ? 'bg-gray-50' : ''
+                                    }`}
+                                >
+                                    <div className="max-w-3xl mx-auto flex gap-4">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                            message.role === 'assistant' 
+                                            ? 'bg-blue-600' 
+                                            : 'bg-gray-600'
+                                        }`}>
+                                            {message.role === 'assistant' 
+                                                ? <Bot className="h-5 w-5 text-white" />
+                                                : <User className="h-5 w-5 text-white" />
+                                            }
+                                        </div>
+                                        <div className="flex-1 prose prose-slate prose-p:leading-relaxed">
+                                            <p className="text-sm text-gray-500 mb-1">
+                                                {message.role === 'assistant' ? 'AI Assistant' : 'You'}
+                                            </p>
+                                            {message.content}
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
+                        
+                        {/* Typing Indicator */}
+                        <AnimatePresence>
+                            {isTyping && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 20 }}
+                                    className="px-4 py-6 bg-gray-50"
+                                >
+                                    <div className="max-w-3xl mx-auto flex gap-4">
+                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                                            <Bot className="h-5 w-5 text-white" />
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <div className="typing-indicator">
+                                                <span></span>
+                                                <span></span>
+                                                <span></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                        
+                        <div ref={messagesEndRef} />
+                    </div>
+                </div>
+
+                {/* Input Container */}
+                <div className="fixed bottom-0 inset-x-0 bg-gradient-to-t from-white via-white to-transparent">
+                    <div className="max-w-3xl mx-auto p-4">
+                        <motion.form 
+                            onSubmit={handleSubmit} 
+                            className="flex gap-3 items-center bg-white border rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+                            whileTap={{ scale: 0.995 }}
                         >
-                            <div className="flex items-center space-x-3">
-                                <MessageSquare size={16} />
-                                <span className="truncate">{session.messages[1]?.content.slice(0, 30) || 'New Chat'}</span>
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">
-                                {new Date(session.lastUpdated).toLocaleDateString()}
-                            </div>
-                        </button>
-                    ))}
+                            <input
+                                type="text"
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                placeholder="พิมพ์ข้อความของคุณที่นี่..."
+                                className="flex-1 px-4 py-4 bg-transparent focus:outline-none text-gray-700 placeholder-gray-400"
+                            />
+                            <motion.button
+                                type="submit"
+                                disabled={!input.trim()}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="p-2 mr-2 text-blue-600 hover:text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                <SendHorizontal className="h-5 w-5" />
+                            </motion.button>
+                        </motion.form>
+                        <p className="text-xs text-center text-gray-400 mt-2">
+                            AI Assistant จะพยายามให้ข้อมูลที่ถูกต้องและเป็นประโยชน์ที่สุด
+                        </p>
+                    </div>
                 </div>
             </div>
 
-            {/* Main Chat Area */}
-            <div className="flex-1 flex flex-col">
-                {/* Header */}
-                <div className="bg-white border-b p-4 flex items-center justify-between">
-                    <button
-                        onClick={() => setIsSidebarOpen(prev => !prev)}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
-                        {isSidebarOpen ? <X size={20} /> : <History size={20} />}
-                    </button>
-                    <h1 className="text-lg font-semibold">Chat History</h1>
-                    <div className="w-8" />
-                </div>
-
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {currentSession?.messages.map((message) => (
-                        <div
-                            key={message.id}
-                            className={`flex items-start space-x-3 ${message.role === 'assistant' ? 'bg-white' : 'bg-blue-50'
-                                } p-4 rounded-lg max-w-3xl mx-auto`}
-                        >
-                            <div className={`p-2 rounded-full ${message.role === 'assistant' ? 'bg-green-100' : 'bg-blue-100'
-                                }`}>
-                                {message.role === 'assistant' ? (
-                                    <Bot size={20} className="text-green-600" />
-                                ) : (
-                                    <User size={20} className="text-blue-600" />
-                                )}
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-gray-800 leading-relaxed">{message.content}</p>
-                            </div>
-                        </div>
-                    ))}
-                    {isLoading && (
-                        <div className="flex items-center justify-center space-x-2 text-gray-500">
-                            <Loader2 className="animate-spin" size={20} />
-                            <span>Thinking...</span>
-                        </div>
-                    )}
-                    <div ref={messagesEndRef} />
-                </div>
-
-                {/* Input form */}
-                <div className="border-t bg-white p-4">
-                    <form onSubmit={handleSubmit} className="max-w-3xl mx-auto flex space-x-4">
-                        <input
-                            type="text"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            placeholder="Type your message here..."
-                            className="flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                        <button
-                            type="submit"
-                            disabled={!input.trim() || isLoading}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                        >
-                            <SendHorizontal size={20} />
-                            <span>Send</span>
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
+            {/* Add CSS for typing indicator */}
+            <style jsx>{`
+                .typing-indicator {
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                }
+                
+                .typing-indicator span {
+                    width: 8px;
+                    height: 8px;
+                    background-color: #60A5FA;
+                    border-radius: 50%;
+                    animation: bounce 1.4s infinite ease-in-out;
+                }
+                
+                .typing-indicator span:nth-child(1) {
+                    animation-delay: -0.32s;
+                }
+                
+                .typing-indicator span:nth-child(2) {
+                    animation-delay: -0.16s;
+                }
+                
+                @keyframes bounce {
+                    0%, 80%, 100% { 
+                        transform: scale(0);
+                    }
+                    40% { 
+                        transform: scale(1);
+                    }
+                }
+            `}</style>
+        </Layout>
     );
 }

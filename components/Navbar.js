@@ -9,20 +9,27 @@ export default function Navbar() {
 
     const handleLogout = async () => {
         try {
-            // เรียก API เพื่อลบ token cookie
             const res = await fetch('/api/auth/logout', {
                 method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
                 credentials: 'include',
-                cache: 'no-store' // ป้องกันการ cache
             });
 
             if (res.ok) {
-                // ล้าง cache และ redirect
-                router.refresh(); // ล้าง cache ของ Next.js
-                router.push('/');
+                // ล้าง local storage หรือ session storage ถ้ามี
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                // redirect ไปหน้า login
+                window.location.href = '/'; // ใช้ window.location.href แทน router.push
+            } else {
+                throw new Error('Logout failed');
             }
         } catch (error) {
             console.error('Logout failed:', error);
+            alert('ไม่สามารถออกจากระบบได้ กรุณาลองใหม่อีกครั้ง');
         }
     };
 
