@@ -4,15 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Lock } from 'lucide-react';
 import DOMPurify from 'dompurify';
+import axios from 'axios';
 
 export default function Login() {
     const router = useRouter();
-    const [credentials, setCredentials] = useState({
-        username: '',
-        password: ''
-    });
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [csrfToken, setCsrfToken] = useState('');
 
     useEffect(() => {
@@ -35,51 +34,36 @@ export default function Login() {
         return /^[a-zA-Z0-9_]{3,20}$/.test(sanitized);
     };
 
-    const handleLogin = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        
+        setIsLoading(true);
+        setError('');
+
         try {
-            setIsSubmitting(true);
-            setError('');
-
-            if (!validateInput(credentials.username)) {
-                throw new Error('ชื่อผู้ใช้ไม่ถูกต้อง กรุณาใช้ตัวอักษร ตัวเลข หรือ _ เท่านั้น (3-20 ตัวอักษร)');
-            }
-
-            const res = await fetch('/api/auth/login', {
+            const response = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-Token': csrfToken,
                 },
-                credentials: 'include',
                 body: JSON.stringify({
-                    username: DOMPurify.sanitize(credentials.username),
-                    password: credentials.password
+                    username,
+                    password
                 })
             });
 
-            const data = await res.json();
+            const data = await response.json();
 
-            if (!res.ok) {
-                throw new Error(data.error);
+            if (response.ok) {
+                window.location.href = '/pages/dashboard';
+            } else {
+                setError(data.error || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
             }
-
-            router.push('/pages/dashboard');
         } catch (err) {
-            setError(err.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
+            console.error('Login error:', err);
+            setError('เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
         } finally {
-            setIsSubmitting(false);
+            setIsLoading(false);
         }
-    };
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setCredentials(prev => ({
-            ...prev,
-            [name]: value
-        }));
-        setError('');
     };
 
     return (
@@ -101,7 +85,7 @@ export default function Login() {
                         </div>
                     )}
 
-                    <form onSubmit={handleLogin} className="space-y-6" autoComplete="off">
+                    <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
                         <div className="space-y-4">
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -114,8 +98,8 @@ export default function Login() {
                                     required
                                     className="block w-full pl-11 pr-4 py-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-100 focus:border-neutral-300 transition-colors text-sm placeholder:text-neutral-400"
                                     placeholder="ชื่อผู้ใช้"
-                                    value={credentials.username}
-                                    onChange={handleChange}
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
                                 />
                             </div>
                             
@@ -130,20 +114,20 @@ export default function Login() {
                                     required
                                     className="block w-full pl-11 pr-4 py-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-neutral-100 focus:border-neutral-300 transition-colors text-sm placeholder:text-neutral-400"
                                     placeholder="รหัสผ่าน"
-                                    value={credentials.password}
-                                    onChange={handleChange}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
                                 />
                             </div>
                         </div>
 
                         <button
                             type="submit"
-                            disabled={isSubmitting}
+                            disabled={isLoading}
                             className={`w-full py-3 px-4 bg-neutral-900 hover:bg-neutral-800 text-white text-sm font-medium rounded-lg transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-900 ${
-                                isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                                isLoading ? 'opacity-50 cursor-not-allowed' : ''
                             }`}
                         >
-                            {isSubmitting ? 'กำลังดำเนินการ...' : 'เข้าสู่ระบบ'}
+                            {isLoading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
                         </button>
                     </form>
                 </div>
