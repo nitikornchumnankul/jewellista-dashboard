@@ -142,4 +142,4 @@ export default function ChatHistory({ onSelectChat, currentChatId, onNewChat, on
             </div>
         </div>
     );
-} 
+}
